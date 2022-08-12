@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+	<meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basic Web Audio example</title>
+	<style>
+	  input {
+		  height: 1.5em;
+		}
+	</style>
+  </head>
+<body>
+
+<audio src="outfoxing.mp3"></audio>
+
+<button class="paused">Play</button>
+<br>
+<input type="range" min="0" max="1" step="0.01" value="1" class="volume">
+<script>
+    // we start by creating an AudioContext instance inside which to manipulate our track:
+    const AudioContext = window.AudioContext;
+    const audioCtx = new AudioContext();
+
+    // we use the AudioContext.createMediaElementSource() method to create a MediaElementAudioSourceNode representing the source of our audio - the <audio> element will be played from.
+    const audioElement = document.querySelector('audio');
+    const playBtn = document.querySelector('button');
+    const volumeSlider = document.querySelector('.volume');
+    
+    const audioSource = audioCtx.createMediaElementSource(audioElement);
+
+    playBtn.addEventListener('click', () => {
+        //autoplay policy
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        //if track is stopped, play it
+        if (playBtn.getAttribute('class') === 'paused') {
+            audioElement.play();
+            playBtn.setAttribute('class', 'playing');
+            playBtn.textContent = 'Pause';
+            // if track is playing, stop it
+        } else if (playBtn.getAttribute('class') === 'playing') {
+            audioElement.pause();
+            playBtn.setAttribute('class', 'paused');
+            playBtn.textContent = 'Play';
+        }
+    });
+
+    // if track ends
+    audioElement.addEventListener('ended', () => {
+        playBtn.setAttribute('class', 'paused');
+        playBtn.textContent = 'Play';
+    });
+
+    // in the above code notice that the play() and pause() methods are not part of the Web Audio API, they are part of the HTMLMediaElement API, which is different but closely-related.
+
+    // next we create a GainNode object using the AudioContext.createGain() method, which can be used to adjust the volume of audio fed through it, and create another event handler that changes the value of the audio graph's gain (volume) whenever the slider value is changed.
+    // volume
+    const gainNode = audioCtx.createGain();
+    volumeSlider.addEventListener('input', () => {
+        gainNode.gain.value = volumeSlider.value;
+    });
+    // the final thing to do to get this to work is to connect the different nodes in the audio graph up, which is done using the AudioNode.connect() method available on every node type.
+    // the AudioContext.destination property represents whatever is the default AudioDestinationNode available on your computer's hardware, e.g. your speakers.
+    audioSource.connect(gainNode).connect(audioCtx.destination);
+
+</script>
+    
+</body>
+</html>
